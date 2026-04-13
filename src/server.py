@@ -1,21 +1,28 @@
 from msg.codec import decode, encode
 import asyncio
 import threading
+from websockify import WebSocketProxy
 
 HOST = "127.0.0.1"
 PORT = 5555
 
 
-async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
-    data = None
-    while data != b"quit":
+async def handle_client(reader, writer):
+    addr, port = writer.get_extra_info("peername")
+
+    while True:
         data = await reader.read(1024)
-        if not data == b"":
-            addr, port = writer.get_extra_info("peername")
-            msg = decode(data)
-            print(f"Message from {addr}:{port}: {msg}")
-            msg = encode(msg)
-            writer.write(msg)
+
+        if not data:
+            break
+
+        if data == b"quit":
+            break
+
+        msg = decode(data)
+        print(f"Message from {addr}:{port}: {msg}")
+
+        writer.write(encode(msg))
         await writer.drain()
 
     writer.close()
@@ -41,7 +48,6 @@ def ws_front(port, host: str = "localhost", offset: int = 20000):
         return proc
 
     signal.signal = signal_signal  # ty:ignore[invalid-assignment]
-    from websockify import WebSocketProxy
 
     proxy = WebSocketProxy(
         listen_port=port + offset,
