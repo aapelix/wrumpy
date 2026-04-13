@@ -1,0 +1,12 @@
+[project]
+name = "wrum"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "asyncio>=4.0.0",
+    "pygame-ce>=2.5.7",
+    "websockets>=16.0",
+    "websockify>=0.13.0",
+]
