@@ -6,9 +6,9 @@ class Stack:
     def __init__(self, path: str, frame_count: int):
         self.frames = assets.sheet.get_frames(path, frame_count)
 
-    def draw(self, screen: pygame.Surface, pos: tuple[int, int], rotation: float):
+    def draw(self, screen: pygame.Surface, pos: tuple[float, float], rotation: float):
         for i, img in enumerate(self.frames):
-            rotated_img = pygame.transform.rotate(img, rotation)
+            rotated_img = pygame.transform.rotate(img, -rotation)
             screen.blit(
                 rotated_img,
                 (

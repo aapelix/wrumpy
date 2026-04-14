@@ -1,13 +1,14 @@
-from msg.codec import decode, encode
+from msg.codec import decode
 import asyncio
 import threading
 from websockify import WebSocketProxy
+from lobby.loop import game_loop, handle_msg
 
 HOST = "127.0.0.1"
 PORT = 5555
 
 
-async def handle_client(reader, writer):
+async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
     addr, port = writer.get_extra_info("peername")
 
     while True:
@@ -16,14 +17,10 @@ async def handle_client(reader, writer):
         if not data:
             break
 
-        if data == b"quit":
-            break
-
         msg = decode(data)
-        print(f"Message from {addr}:{port}: {msg}")
+        print(f"got from {addr}:{port}: {msg}")
 
-        writer.write(encode(msg))
-        await writer.drain()
+        handle_msg(writer, msg)
 
     writer.close()
     await writer.wait_closed()
@@ -65,6 +62,17 @@ ws_thread = threading.Thread(target=ws_front, args=(PORT,))
 ws_thread.daemon = True
 ws_thread.start()
 
+
+async def main():
+    server = await asyncio.start_server(handle_client, HOST, PORT)
+    print("Starting server...")
+
+    asyncio.create_task(game_loop())
+
+    async with server:
+        await server.serve_forever()
+
+
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
-    loop.run_until_complete(run_server())
+    loop.run_until_complete(main())

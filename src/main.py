@@ -1,7 +1,7 @@
 import net.task
 
 import const
-from scene import Scene
+from scene import manager
 from scenes.menu import MenuScene
 import asyncio
 import pygame
@@ -21,11 +21,8 @@ if sys.platform == "emscripten":
 
 pygame.init()
 
-current_scene: Scene
-
 
 async def main():
-    global current_scene
 
     net.task.run(HOST, PORT)
 
@@ -34,7 +31,7 @@ async def main():
 
     clock = pygame.time.Clock()
 
-    current_scene = MenuScene()
+    manager.switch(MenuScene())
 
     running = True
     while running:
@@ -47,15 +44,22 @@ async def main():
         try:
             msg = net.task.socket_in.get_nowait()
             print(f"got {msg}")
+            manager.handle_msg(msg)
         except asyncio.QueueEmpty:
             pass
 
-        await current_scene.update(dt)
+        if manager.current_scene is None:
+            await asyncio.sleep(0)
+            screen.fill((255, 255, 255))
+            pygame.display.update()
+            continue
+
+        await manager.current_scene.update(dt)
 
         screen.fill((0, 0, 0))
         canvas.fill((255, 255, 255))
 
-        current_scene.draw(canvas)
+        manager.current_scene.draw(canvas)
         screen.blit(
             pygame.transform.scale(canvas, screen.get_size()),
             (0, 0),
