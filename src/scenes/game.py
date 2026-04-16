@@ -1,19 +1,19 @@
+from scenes.base import Scene
 import net.task
 from msg.messages import Message, Input, InputMsg
 from entities.car import Car
 import pygame
-from scene import Scene
 
 
 class GameScene(Scene):
     cars: dict[int, Car] = {}
     last_input: Input
 
-    def __init__(self):
-        super().__init__("game")
+    def __init__(self, manager):
+        super().__init__("game", manager)
         self.last_input = Input(throttle=0, turn=0)
 
-    async def update(self, dt: float):
+    def update(self, dt: float):
         for car in self.cars.values():
             car.update(dt)
 
@@ -32,7 +32,7 @@ class GameScene(Scene):
 
         if (throttle, turn) != (self.last_input["throttle"], self.last_input["turn"]):
             self.last_input = Input(throttle=throttle, turn=turn)
-            await net.task.send.put(
+            net.task.send.put_nowait(
                 InputMsg(
                     type="input",
                     input=Input(throttle=throttle, turn=turn),

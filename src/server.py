@@ -26,13 +26,6 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     await writer.wait_closed()
 
 
-async def run_server():
-    server = await asyncio.start_server(handle_client, HOST, PORT)
-    print("Starting server...")
-    async with server:
-        await server.serve_forever()
-
-
 def ws_front(port, host: str = "localhost", offset: int = 20000):
     import signal
     from types import FrameType
@@ -70,6 +63,7 @@ async def main():
     asyncio.create_task(game_loop())
 
     async with server:
+        print(f"Server started on {HOST}:{PORT}")
         await server.serve_forever()
 
 

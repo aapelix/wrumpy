@@ -1,8 +1,9 @@
+from scenes.manager import Manager
+import utils.font
 import net.task
 
 import const
-from scene import manager
-from scenes.menu import MenuScene
+import utils.events
 import asyncio
 import pygame
 import sys
@@ -23,7 +24,6 @@ pygame.init()
 
 
 async def main():
-
     net.task.run(HOST, PORT)
 
     screen = pygame.display.set_mode((const.WINDOW_WIDTH, const.WINDOW_HEIGHT))
@@ -31,19 +31,28 @@ async def main():
 
     clock = pygame.time.Clock()
 
-    manager.switch(MenuScene())
+    utils.font.load_fonts()
+
+    manager = Manager()
+
+    manager.switch_by_name("menu")
 
     running = True
     while running:
-        dt = clock.tick(60) / 1000.0
+        utils.events.update_events()
 
-        for event in pygame.event.get():
+        dt = min(clock.tick(60) / 1000.0, 0.1)
+
+        for event in utils.events.get_events():
             if event.type == pygame.QUIT:
                 running = False
 
         try:
             msg = net.task.socket_in.get_nowait()
-            print(f"got {msg}")
+
+            if msg["type"] == "join":
+                print(f"joined lobby with id {msg['id']}")
+
             manager.handle_msg(msg)
         except asyncio.QueueEmpty:
             pass
@@ -54,7 +63,7 @@ async def main():
             pygame.display.update()
             continue
 
-        await manager.current_scene.update(dt)
+        manager.current_scene.update(dt)
 
         screen.fill((0, 0, 0))
         canvas.fill((255, 255, 255))

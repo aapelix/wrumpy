@@ -1,3 +1,4 @@
+import sys
 from msg.codec import decode, encode
 import msg.messages
 import asyncio
@@ -15,14 +16,25 @@ async def run(
 
     connected = False
     while not connected:
-        try:
-            sock.connect((host, port))
-        except BlockingIOError:
-            pass
-        except OSError as e:
-            if e.errno in (30, 106):
+        print(f"connecting to {host}:{port}...")
+
+        if sys.platform == "emscripten":
+            try:
+                sock.connect((host, port))
+                print(f"connected to {host}:{port}")
+            except BlockingIOError:
+                pass
+            except OSError as e:
+                if e.errno in (30, 106):
+                    print(f"connected to {host}:{port}")
+                    connected = True
+        else:
+            try:
+                await asyncio.get_event_loop().sock_connect(sock, (host, port))
                 print(f"connected to {host}:{port}")
                 connected = True
+            except ConnectionRefusedError:
+                pass
 
         await asyncio.sleep(0)
 
