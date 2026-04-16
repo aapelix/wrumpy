@@ -9,18 +9,27 @@ PORT = 5555
 
 
 async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
-    addr, port = writer.get_extra_info("peername")
+    addr = writer.get_extra_info("peername")
+
+    buffer = ""
 
     while True:
         data = await reader.read(1024)
-
         if not data:
             break
 
-        msg = decode(data)
-        print(f"got from {addr}:{port}: {msg}")
+        buffer += data.decode("utf-8")
 
-        handle_msg(writer, msg)
+        while "\n" in buffer:
+            line, buffer = buffer.split("\n", 1)
+
+            if not line.strip():
+                continue
+
+            msg = decode(line)
+            print(f"got from {addr}: {msg}")
+
+            handle_msg(writer, msg)
 
     writer.close()
     await writer.wait_closed()

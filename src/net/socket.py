@@ -40,11 +40,18 @@ async def run(
 
     await asyncio.sleep(0)
 
+    buffer = ""
+
     while True:
         try:
             data = sock.recv(1024)
             if data:
-                await socket_in.put(decode(data))
+                buffer += data.decode("utf-8")
+
+                while "\n" in buffer:
+                    line, buffer = buffer.split("\n", 1)
+                    if line.strip():
+                        await socket_in.put(decode(line))
             else:
                 raise Exception("socket closed")
 

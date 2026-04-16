@@ -31,6 +31,7 @@ class JoinScene(Scene):
             size=(50, 22),
             on_click=self._on_join_click,
         )
+        self.join_pressed = False
 
     def update(self, dt: float):
         self.input.update(dt, utils.events.get_events())
@@ -56,8 +57,13 @@ class JoinScene(Scene):
         self.manager.switch_by_name("menu")
 
     def _on_join_click(self):
+        if self.join_pressed:
+            return
+
         if len(self.input.value) == 0:
             return
+
+        self.join_pressed = True
 
         net.task.send.put_nowait(
             JoinLobbyMsg(
